@@ -26,14 +26,15 @@ class Game:
     def nearest(self, pos):
         """find which point is closest to the mouse"""
         pos = list(pos)
-        closest = self.points[0][:2]
-        dist = math.dist(pos, closest)
+        closest = 0
+        dist = math.dist(pos, self.points[0][:2])
         for i in range(len(self.points)):
             p = self.points[i]
             new_dist = math.dist(pos, p[:2])
             if new_dist < dist:
                 dist = new_dist
                 closest = i
+        print(closest)
         return closest
 
     def place_piece(self, pos):
