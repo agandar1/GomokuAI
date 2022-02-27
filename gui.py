@@ -3,18 +3,21 @@ import pygame
 import math
 from pathlib import Path
 
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-# Themes
-LIGHT = pygame.image.load(Path("img/board.png"))
-DARK = pygame.image.load(Path("img/board_dark.png"))
-
+# Images
+LIGHT_THEME = pygame.image.load(Path("img/board.png"))
+DARK_THEME = pygame.image.load(Path("img/board_dark.png"))
+# Misc
+CLOCK = pygame.time.Clock()
+FPS = 60
 
 class Game:
     def __init__(self):
         self.running = True
-        self.board = LIGHT
+        self.board = LIGHT_THEME
         self.screen = pygame.display.set_mode((1000, 1060))
         self.points = [[62+(49*x), 122+(49*y), 0]
                        for x in range(19) for y in range(19)]
@@ -51,6 +54,7 @@ class Game:
 # Run main game loop
 game = Game()
 while game.running:
+    CLOCK.tick(FPS)
     game.check_input()
     game.draw_screen()
 
