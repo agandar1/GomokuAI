@@ -66,7 +66,7 @@ class Game:
         for p in self.points:
             if p[2] != -1:
                 color = BLACK if (p[2] == 0) else WHITE
-                pygame.draw.circle(self.screen, color, p[:2], 25)
+                pygame.draw.circle(self.screen, color, p[:2], 24)
 
         # finally flip display
         pygame.display.flip()
