@@ -21,6 +21,7 @@ class Game:
         self.screen = pygame.display.set_mode((1000, 1060))
         self.points = [[62+(49*x), 122+(49*y), 0]
                        for x in range(19) for y in range(19)]
+        self.screen.blit(self.board, (0, 0))
         
     def nearest(self, pos):
         """find which point is closest to the mouse"""
@@ -42,7 +43,6 @@ class Game:
 
     def draw_screen(self):
         """draw everything on the screen"""
-        self.screen.blit(self.board, (0, 0))
 
         pos = pygame.mouse.get_pos()
         if 1028 > pos[1] > 95 and 965 > pos[0] > 35:
