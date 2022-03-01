@@ -10,7 +10,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 # Images
 LIGHT_THEME = pygame.image.load(Path("img/board.png"))
-DARK_THEME = pygame.image.load(Path("img/board_dark.png"))
+DARK_THEME = pygame.image.load(Path("img/board_dark1.png"))
 play_first_img_button = pygame.image.load('img/play_first.png').convert_alpha()
 play_second_img_button = pygame.image.load('img/play_second.png').convert_alpha()
 ai_vs_ai_img_button = pygame.image.load('img/ai_vs_ai.png').convert_alpha()
@@ -45,8 +45,6 @@ class Button:
             self.clicked = False
 
         return action
-
-
 
 
 class Game:
@@ -126,8 +124,6 @@ class Game:
 
         # finally flip display
         pygame.display.flip()
-
-        
 
 # Run main game loop
 game = Game(bot_first=False)
