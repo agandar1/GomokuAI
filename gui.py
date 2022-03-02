@@ -55,41 +55,23 @@ class Game:
         point = self.points[coords[0]][coords[1]]
         color = point[2]
         x, y = coords[0], coords[1]
+        directions = [(1, 0), (0, 1), (1, 1), (-1, 1)]
 
-        # Count Horizontally
-        count1 = count2 = 0
-        for i in range(1, 5):
-            if (x+i < 19 and self.points[x+i][y][2] == color):
-                count1 += 1
-            if (x-i > -1 and self.points[x-i][y][2] == color):
-                count2 += 1
-        if count1 + count2 >= 4: return ((x, y), count1, (1, 0))
-
-        # Count Vertically
-        count1 = count2 = 0
-        for i in range(1, 5):
-            if (y+i < 19 and self.points[x][y+i][2] == color):
-                count1 += 1
-            if (y-i > -1 and self.points[x][y-i][2] == color):
-                count2 += 1
-        if count1 + count2 >= 4: return ((x, y), count1, (0, 1))
-
-        # Count Diagonally 1
-        for i in range(1, 5):
-            if (x+i < 19 and y+i < 19 and self.points[x+i][y+i][2] == color):
-                count1 += 1
-            if (x-i > -1 and y-i > -1 and self.points[x-i][y-i][2] == color):
-                count2 += 1
-        if count1 + count2 >= 4: return ((x, y), count1, (1, 1))
-
-        # Count Diagonally 2
-        count1 = count2 = 0
-        for i in range(1, 5):
-            if (x-i > -1 and y+i < 19 and self.points[x-i][y+i][2] == color):
-                count1 += 1
-            if (x+i < 19 and y-i > -1 and self.points[x+i][y-i][2] == color):
-                count2 += 1
-        if count1 + count2 >= 4: return ((x, y), count1, (-1, 1))
+        for d in directions:
+            count1 = count2 = 0
+            for i in range (1, 5):
+                newx, newy = x+(i*d[0]), y+(i*d[1])
+                if (-1 < newx < 19 and -1 < newy < 19):
+                    if self.points[newx][newy][2] == color:
+                        count1 += 1
+                    else: break
+            for i in range (1, 5):
+                newx, newy = x-(i*d[0]), y-(i*d[1])
+                if (-1 < newx < 19 and -1 < newy < 19):
+                    if self.points[newx][newy][2] == color:
+                        count2 += 1
+                    else: break
+            if count1 + count2 >= 4: return ((x, y), count1, d)
 
         return False
 
