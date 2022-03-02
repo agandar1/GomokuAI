@@ -56,22 +56,17 @@ class Game:
         color = point[2]
         x, y = coords[0], coords[1]
         directions = [(1, 0), (0, 1), (1, 1), (-1, 1)]
-
+        
         for d in directions:
-            count1 = count2 = 0
-            for i in range (1, 5):
-                newx, newy = x+(i*d[0]), y+(i*d[1])
-                if (-1 < newx < 19 and -1 < newy < 19):
-                    if self.points[newx][newy][2] == color:
-                        count1 += 1
-                    else: break
-            for i in range (1, 5):
-                newx, newy = x-(i*d[0]), y-(i*d[1])
-                if (-1 < newx < 19 and -1 < newy < 19):
-                    if self.points[newx][newy][2] == color:
-                        count2 += 1
-                    else: break
-            if count1 + count2 >= 4: return ((x, y), count1, d)
+            counts = [0, 0] 
+            for n in ((1, 0), (-1, 1)):
+                for i in range (1, 5):
+                    newx, newy = x+(n[0]*(i*d[0])), y+(n[0]*(i*d[1]))
+                    if (-1 < newx < 19 and -1 < newy < 19):
+                        if self.points[newx][newy][2] == color:
+                            counts[n[1]] += 1
+                        else: break
+            if counts[0] + counts[1] >= 4: return ((x, y), counts[0], d)
 
         return False
 
