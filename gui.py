@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import pygame
 import math
+from bot import Bot
 
 
 class Button:
@@ -10,7 +11,7 @@ class Button:
         self.rect = self.image.get_rect(topleft=(x, y))
 
     def clicked(self, pos):
-        if self.rect.collidepoint(pos):
+        if (self.rect.collidepoint(pos)):
             return True
 
     def draw(self, screen):
@@ -18,16 +19,21 @@ class Button:
 
 
 class Game:
-    def __init__(self, screen, bot_first, colors, ltheme, dtheme):
+    def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme):
         self.screen = screen
-        self.bot_first = bot_first
+        self.bot = Bot(19)
+        self.running, self.game_over = True, False
+        self.human_playing = human_playing
         self.colors = colors
-        self.game_over = False
-        self.running = self.black_turn = True
         self.ltheme, self.dtheme = ltheme, dtheme
         self.theme = ltheme
         coords = [[62+(49*x), 122+(49*y), -1] for x in range(19) for y in range(19)]
         self.points = [coords[x:x+19] for x in range(0, len(coords), 19)]
+        if bot_first:
+            self.place_piece(self.bot.start(), True)
+            self.black_turn = False
+        else:
+            self.black_turn = True
 
     def nearest(self, pos):
         """find which point is closest to the mouse"""
@@ -38,18 +44,21 @@ class Game:
             for y in range(len(self.points[0])):
                 p = self.points[x][y]
                 new_dist = math.dist(pos, p[:2])
-                if new_dist < dist:
+                if (new_dist < dist):
                     dist = new_dist
                     closest = (x, y)
         return closest
 
-    def place_piece(self, pos):
-        i = self.nearest(pos)
-        p = self.points[i[0]][i[1]][2]
-        if p == -1:
-            self.points[i[0]][i[1]][2] = 0 if self.black_turn else 1
+    def place_piece(self, pos, bot_move):
+        placed = False
+        i = [pos[0], pos[1]] if bot_move else self.nearest(pos)
+        p = self.points[i[0]][i[1]]
+        if (p[2] == -1):
+            p[2] = 0 if self.black_turn else 1
             self.black_turn = not self.black_turn        
+            placed = True
         self.game_over = self.check_win(i)
+        return (i, placed)
 
     def check_win(self, coords):
         point = self.points[coords[0]][coords[1]]
@@ -63,10 +72,10 @@ class Game:
                 for i in range (1, 5):
                     newx, newy = x+(n[0]*(i*d[0])), y+(n[0]*(i*d[1]))
                     if (-1 < newx < 19 and -1 < newy < 19):
-                        if self.points[newx][newy][2] == color:
+                        if (self.points[newx][newy][2] == color):
                             counts[n[1]] += 1
                         else: break
-            if counts[0] + counts[1] >= 4: return ((x, y), counts[0], d)
+            if (counts[0] + counts[1] >= 4): return ((x, y), counts[0], d)
 
         return False
 
@@ -89,42 +98,46 @@ class Game:
         self.running = True
         self.game_over = False
         
-        if player_first:
-            self.bot_first = False
-        else:
-            self.bot_first = True
-
         for x in range(len(self.points)):
             for y in range(len(self.points[0])):
                 self.points[x][y][2] = -1
+        self.bot.new_board()
+
+        self.black_turn = True
+        if (not player_first):
+            self.place_piece(self.bot.start(), True)
+
 
     def check_input(self):
         """check for user input"""
         pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if (event.type == pygame.QUIT):
                 self.running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if 1028 > pos[1] > 95 and 965 > pos[0] > 35:
-                    if not self.game_over:
-                        self.place_piece(pos)
 
-                if self.theme["play1"].clicked(pos):
+            elif (event.type == pygame.MOUSEBUTTONDOWN):
+                if (1028 > pos[1] > 95 and 965 > pos[0] > 35):
+                    if (not self.game_over and self.human_playing):
+                        move = self.place_piece(pos, False)
+                        if (not self.game_over and move[1] == True):
+                            self.place_piece(self.bot.turn(move[0]), True)
+
+                if (self.theme["play1"].clicked(pos)):
                     self.new_game(player_first=True)
 
-                if self.theme["play2"].clicked(pos):
-                    self.new_game(player_first=True)
+                if (self.theme["play2"].clicked(pos)):
+                    self.new_game(player_first=False)
 
-                if self.theme["ai_vs_ai"].clicked(pos):
+                if (self.theme["ai_vs_ai"].clicked(pos)):
                     print("SPECTATING")
 
-                if self.theme["theme"].clicked(pos):
-                    if self.theme == self.ltheme:
+                if (self.theme["theme"].clicked(pos)):
+                    if (self.theme == self.ltheme):
                         self.theme = self.dtheme
                     else:
                         self.theme = self.ltheme
 
-                if self.theme["exit"].clicked(pos):
+                if (self.theme["exit"].clicked(pos)):
                     self.running = False
 
     def draw_screen(self):
@@ -143,15 +156,15 @@ class Game:
         for x in range(len(self.points)):
             for y in range(len(self.points[0])):
                 p = self.points[x][y]
-                if p[2] != -1:
-                    if p[2] == 0:
+                if (p[2] != -1):
+                    if (p[2] == 0):
                         color = self.colors['black']
                     else:
                         color = self.colors['white']
                     pygame.draw.circle(self.screen, color, (p[0], p[1]), 24)
 
         # draw winning line
-        if self.game_over:
+        if (self.game_over):
             self.draw_line(self.game_over)
 
         # finally flip display
@@ -169,11 +182,11 @@ colors = {
 }
 ltheme = {
     "board": pygame.image.load("img/board.png"),
-    "play1": Button(0, 10, pygame.image.load("img/play1.png").convert_alpha()),
-    "play2": Button(200, 10, pygame.image.load("img/play2.png").convert_alpha()),
-    "ai_vs_ai": Button(400, 10, pygame.image.load("img/ai.png").convert_alpha()),
-    "theme": Button(600, 10, pygame.image.load("img/theme.png").convert_alpha()),
-    "exit": Button(800, 10, pygame.image.load("img/exit.png").convert_alpha())
+    "play1": Button(10, 5, pygame.image.load("img/play1.png").convert_alpha()),
+    "play2": Button(207, 5, pygame.image.load("img/play2.png").convert_alpha()),
+    "ai_vs_ai": Button(405, 5, pygame.image.load("img/ai.png").convert_alpha()),
+    "theme": Button(600, 5, pygame.image.load("img/theme.png").convert_alpha()),
+    "exit": Button(807, 5, pygame.image.load("img/exit.png").convert_alpha())
 }
 dtheme = {
     "board": pygame.image.load("img/board_dark.png"),
@@ -186,7 +199,7 @@ dtheme = {
 
 
 # Run main game loop
-game = Game(screen, False, colors, ltheme, dtheme)
+game = Game(screen, False, True, colors, ltheme, dtheme)
 while game.running:
     clock.tick(fps)
     game.check_input()
