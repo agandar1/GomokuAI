@@ -169,11 +169,11 @@ colors = {
 }
 ltheme = {
     "board": pygame.image.load("img/board.png"),
-    "play1": Button(0, 10, pygame.image.load("img/play1.png").convert_alpha()),
-    "play2": Button(200, 10, pygame.image.load("img/play2.png").convert_alpha()),
-    "ai_vs_ai": Button(400, 10, pygame.image.load("img/ai.png").convert_alpha()),
-    "theme": Button(600, 10, pygame.image.load("img/theme.png").convert_alpha()),
-    "exit": Button(800, 10, pygame.image.load("img/exit.png").convert_alpha())
+    "play1": Button(10, 5, pygame.image.load("img/play1.png").convert_alpha()),
+    "play2": Button(207, 5, pygame.image.load("img/play2.png").convert_alpha()),
+    "ai_vs_ai": Button(405, 5, pygame.image.load("img/ai.png").convert_alpha()),
+    "theme": Button(600, 5, pygame.image.load("img/theme.png").convert_alpha()),
+    "exit": Button(807, 5, pygame.image.load("img/exit.png").convert_alpha())
 }
 dtheme = {
     "board": pygame.image.load("img/board_dark.png"),
