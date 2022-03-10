@@ -119,6 +119,7 @@ class Game:
                 if (1028 > pos[1] > 95 and 965 > pos[0] > 35):
                     if (not self.game_over and self.human_playing):
                         move = self.place_piece(pos, False)
+                        self.draw_screen()
                         if (not self.game_over and move[1] == True):
                             self.place_piece(self.bot.turn(move[0]), True)
 
