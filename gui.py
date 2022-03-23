@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
 import pygame
 import math
 from bot import Bot
+from bot_old import Bot as oldBot
 
 
 class Button:
@@ -22,6 +22,7 @@ class Game:
     def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme):
         self.screen = screen
         self.bot = Bot(19)
+        self.old_bot = oldBot(19)
         self.running, self.game_over = True, False
         self.human_playing = human_playing
         self.colors = colors
@@ -94,19 +95,41 @@ class Game:
             pygame.draw.line(self.screen, self.colors["red"], spots[0], s, 5)
             
 
-    def new_game(self, player_first):
+    def new_game(self, player_first, ai_vs_ai):
         self.running = True
         self.game_over = False
+        self.human_playing = not ai_vs_ai
         
         for x in range(len(self.points)):
             for y in range(len(self.points[0])):
                 self.points[x][y][2] = -1
         self.bot.new_board()
+        self.old_bot.new_board()
 
         self.black_turn = True
-        if (not player_first):
+        if (not player_first and not ai_vs_ai):
             self.place_piece(self.bot.start(), True)
+        elif (ai_vs_ai):
+            self.ai_vs_ai()
+            
 
+    def ai_vs_ai(self):
+        move = self.old_bot.start()
+        self.place_piece(move, True)
+        self.draw_screen()
+        self.check_input()
+        old_turn = False
+        while (not self.game_over and not self.human_playing and self.running):
+            if old_turn:
+                move = self.old_bot.turn(move)
+                old_turn = False
+            else:
+                move = self.bot.turn(move)
+                old_turn = True
+            self.place_piece(move, True)
+            self.draw_screen()
+            self.check_input()
+            
 
     def check_input(self):
         """check for user input"""
@@ -124,13 +147,13 @@ class Game:
                             self.place_piece(self.bot.turn(move[0]), True)
 
                 if (self.theme["play1"].clicked(pos)):
-                    self.new_game(player_first=True)
+                    self.new_game(player_first=True, ai_vs_ai=False)
 
                 if (self.theme["play2"].clicked(pos)):
-                    self.new_game(player_first=False)
+                    self.new_game(player_first=False, ai_vs_ai=False)
 
                 if (self.theme["ai_vs_ai"].clicked(pos)):
-                    print("SPECTATING")
+                    self.new_game(player_first=False, ai_vs_ai=True)
 
                 if (self.theme["theme"].clicked(pos)):
                     if (self.theme == self.ltheme):
