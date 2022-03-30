@@ -112,7 +112,6 @@ class Game:
         elif (ai_vs_ai):
             self.ai_vs_ai()
             
-
     def ai_vs_ai(self):
         move = self.old_bot.start()
         self.place_piece(move, True)
@@ -120,17 +119,18 @@ class Game:
         self.check_input()
         old_turn = False
         while (not self.game_over and not self.human_playing and self.running):
-            if old_turn:
-                move = self.old_bot.turn(move)
-                old_turn = False
-            else:
-                move = self.bot.turn(move)
-                old_turn = True
-            self.place_piece(move, True)
-            self.draw_screen()
-            self.check_input()
+            for event in pygame.event.get():
+                if (event.type == pygame.KEYDOWN):
+                    if old_turn:
+                        move = self.old_bot.turn(move)
+                        old_turn = False
+                    else:
+                        move = self.bot.turn(move)
+                        old_turn = True
+                    self.place_piece(move, True)
+                    self.draw_screen()
+                    self.check_input()
             
-
     def check_input(self):
         """check for user input"""
         pos = pygame.mouse.get_pos()
