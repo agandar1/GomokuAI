@@ -22,7 +22,8 @@ class Game:
     def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme):
         self.screen = screen
         self.bot = Bot(19)
-        self.old_bot = oldBot(19)
+#        self.old_bot = oldBot(19)
+        self.old_bot = Bot(19)
         self.running, self.game_over = True, False
         self.human_playing = human_playing
         self.colors = colors
