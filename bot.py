@@ -127,65 +127,56 @@ class Bot:
                         coords = [[x, y]]
                     elif (val == best):
                         coords.append([x, y])
-        # return a random one from those highest ones
-        # Note: maybe instead of random, we can check which is
-        #       highest on the opponent's board, and then
-        #       random if there is still a tie there.
-        return max(available, key=lambda x: enemy_scores[x[0]][x[1]])
-        return random.choice(coords)
+        # if there is a tie, pick worse one for opponent
+        return max(coords, key=lambda x: enemy_scores[x[0]][x[1]])
 
     def block(self, board, scores, enemy_scores, monos):
         """find the best place to block a monomial"""
         coords, val = monos[1][0], monos[1][1]
         # block closed 4, or try to block open 4
         if (val == 16):
-            for c in coords:
-                if (board[c[0]][c[1]] == 1):
-                    return c
+            available = [c for c in coords if board[c[0]][c[1]] == 1]
+            return max(available, key=lambda x: scores[x[0]][x[1]])
+
         # pick most beneficial spot to block open 3 or starting move
         elif (val == 8):
-            taken, available = [], []
-            for c in coords:
-                if (board[c[0]][c[1]] != 1):
-                    taken.append(c)
+            taken = [c for c in coords if board[c[0]][c[1]] != 1]
+            x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
+            change_x, change_y = coords[1][0] - coords[0][0], coords[1][1] - coords[0][1]
+            
             # get available vertical spots
-            if (coords[0][0] == coords[1][0]):
-                available = [[taken[0][0], taken[0][1]-1], [taken[-1][0], taken[-1][1]+1]]
-                for y in range(taken[0][1], taken[-1][1]):
-                    if (board[taken[0][0]][y] == 1):
-                        available.append([taken[0][0], y])
-
-            # get available horizontal spots
-            elif (coords[0][1] == coords[1][1]):
-                available = [[taken[0][0]-1, taken[0][1]], [taken[-1][0]+1, taken[-1][1]]]
-                for x in range(taken[0][0], taken[-1][0]):
-                    if (board[x][taken[0][1]] == 1):
-                        available.append([x, taken[0][1]])
-
-            # get available negative slope diagonal spots
-            elif (coords[1][0] > coords[0][0] and coords[1][1] > coords[0][1]):
-                available = [[taken[0][0]-1, taken[0][1]-1], [taken[-1][0]+1, taken[-1][1]+1]]
+            if (change_x == 0):
+                available = [[x, y-1], [last_x, last_y+1]]
                 for i in range(len(taken)):
-                    if (board[taken[0][0]+i][taken[0][1]+i] == 1):
-                        available.append([taken[0][0]+i, taken[0][0]+i])
-
+                    if (board[x][y+i] == 1):
+                        available.append([x, y+i])
+            # get available horizontal spots
+            elif (change_y == 0):
+                available = [[x-1, y], [last_x+1, last_y]]
+                for i in range(len(taken)):
+                    if (board[x+i][y] == 1):
+                        available.append([x+i, y])
+            # get available negative slope diagonal spots
+            elif (change_x > 0 and change_y > 0):
+                available = [[x-1, y-1], [last_x+1, last_y+1]]
+                for i in range(len(taken)):
+                    if (board[x+i][y+i] == 1):
+                        available.append([x+i, y+i])
             # get available positive slope diagonal spots
             else:
-                available = [[taken[0][0]+1, taken[0][1]-1], [taken[-1][0]-1, taken[-1][1]+1]]
+                available = [[x+1, y-1], [last_x-1, last_y+1]]
                 for i in range(len(taken)):
-                    if (board[taken[0][0]-i][taken[0][1]+i] == 1):
-                        available.append([taken[0][0]-i, taken[0][1]+i])
-
+                    if (board[x-i][y+i] == 1):
+                        available.append([x-i, y+i])
             # choose the one best for the bot
             move = max(available, key=lambda x: scores[x[0]][x[1]])
             return move
+
         # choose a spot close to the opponent's opening
         elif (val == 2):
-            available = []
-            for c in coords:
-                if (board[c[0]][c[1]] == 1):
-                    available.append(c)
+            available = [c for c in coords if board[c[0]][c[1]] == 1]
             return max(available, key=lambda x: enemy_scores[x[0]][x[1]])
+
         # otherwise just try to build
         else:
             return self.build(board, scores, enemy_scores, monos[0])
@@ -193,27 +184,18 @@ class Bot:
     def build(self, board, scores, enemy_scores, best_mono):
         """pick a spot to try to win"""
         coords, val = best_mono[0], best_mono[1]
-        # immediately win if we have 4 in a row
-        if (val == 16):
-            for c in coords:
-                if (board[c[0]][c[1]] == 1):
-                    return c
-        # pick best of 2 open spots in open 3
-        elif (val == 8):
-            available = []
-            for c in coords:
-                if (board[c[0]][c[1]] == 1):
-                    available.append(c)
+        # immediately win if we have 4 in a row or pick best spot in open 3
+        if (val >= 8):
+            available = [c for c in coords if board[c[0]][c[1]] == 1]
             return max(available, key=lambda x: scores[x[0]][x[1]])
-        # otherwise random highest spot
+        # otherwise just get most valuable spot
         else:
-            print("choosing highest")
             return self.highest_spot(board, scores, enemy_scores)
         
     def start(self):
         """run when the bot will start the game"""
-        # just picks random spot near the center (any 20 point spot)
-        move = [random.randint(6, 12), random.randint(6, 12)]
+        # just picks random spot near the center
+        move = [random.randint(7, 11), random.randint(7, 11)]
         self.board[move[0]][move[1]] = 2
         return move
 
