@@ -1,8 +1,5 @@
 import pygame
 import math
-from bot import Bot
-from bot_old import Bot as oldBot
-
 
 class Button:
     def __init__(self, x, y, image):
@@ -19,11 +16,10 @@ class Button:
 
 
 class Game:
-    def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme):
+    def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme, bot1, bot2):
         self.screen = screen
-        self.bot = Bot(19)
-#        self.old_bot = oldBot(19)
-        self.old_bot = Bot(19)
+        self.bot = bot1
+        self.bot2 = bot2
         self.running, self.game_over = True, False
         self.human_playing = human_playing
         self.colors = colors
@@ -105,7 +101,7 @@ class Game:
             for y in range(len(self.points[0])):
                 self.points[x][y][2] = -1
         self.bot.new_board()
-        self.old_bot.new_board()
+        self.bot2.new_board()
 
         self.black_turn = True
         if (not player_first and not ai_vs_ai):
@@ -114,21 +110,21 @@ class Game:
             self.ai_vs_ai()
             
     def ai_vs_ai(self):
-        move = self.old_bot.start()
+        move = self.bot.start()
         self.place_piece(move, True)
         self.draw_screen()
         self.check_input()
-        old_turn = False
+        bot2_turn = True
         while (not self.game_over and not self.human_playing and self.running):
             keys = pygame.key.get_pressed()
             pygame.event.pump()
             if (keys[pygame.K_SPACE]):
-                if old_turn:
-                    move = self.old_bot.turn(move)
-                    old_turn = False
+                if bot2_turn:
+                    move = self.bot2.turn(move)
+                    bot2_turn = False
                 else:
                     move = self.bot.turn(move)
-                    old_turn = True
+                    bot2_turn = True
                 self.place_piece(move, True)
                 self.draw_screen()
             self.check_input()
@@ -196,8 +192,7 @@ class Game:
         # finally flip display
         pygame.display.flip()
 
-
-# Globals
+# Global Variables
 screen = pygame.display.set_mode((1000, 1060))
 clock = pygame.time.Clock()
 fps = 60
@@ -222,13 +217,3 @@ dtheme = {
     "theme": Button(600, 5, pygame.image.load("img/theme_dark.png").convert_alpha()),
     "exit": Button(807, 5, pygame.image.load("img/exit_dark.png").convert_alpha()),
 }
-
-
-# Run main game loop
-game = Game(screen, False, True, colors, ltheme, dtheme)
-while game.running:
-    clock.tick(fps)
-    game.check_input()
-    game.draw_screen()
-
-pygame.quit()

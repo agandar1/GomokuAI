@@ -1,0 +1,54 @@
+[
+  {
+    "Name" : "Classic Color",
+    "Type" : 0,
+    "Board" : "ccc9a1",
+	"Background" : "F5F1DE",
+    "Line" : "888888",
+	"BoardText" : "000000",
+	"ScoreText" : "000000",
+	"BlackStone" : "Black_Paint.gif",
+	"WhiteStone" : "White_Paint.gif",
+	"BotOneText" : "ffffff",
+	"BotTwoText" : "000000"
+  },
+  {
+    "Name" : "Classic Board",
+    "Type" : 1,
+    "Board" : "Spruce.gif",
+	"Background" : "F5F1DE",
+    "Line" : "333333",
+	"BoardText" : "000000",
+	"ScoreText" : "000000",
+	"BlackStone" : "Black_Paint.gif",
+	"WhiteStone" : "White_Paint.gif",
+	"BotOneText" : "FFCC00",
+	"BotTwoText" : "C04000"
+  },
+  {
+    "Name" : "Mahogany",
+    "Type" : 1,
+    "Board" : "Mahogany.gif",
+	"Background" : "F5F1DE",
+    "Line" : "a67c00",
+	"BoardText" : "000000",
+	"ScoreText" : "ffffff",
+	"BlackStone" : "Black_Slate.gif",
+	"WhiteStone" : "White_Pearl.gif",
+	"BotOneText" : "FFCC00",
+	"BotTwoText" : "C04000"
+  },
+  {
+    "Name" : "Night",
+    "Type" : 0,
+    "Board" : "191919",
+	"Background" : "222222",
+    "Line" : "00e9ff",
+	"BoardText" : "00e9ff",
+	"ScoreText" : "f8f8f8",
+	"BlackStone" : "Black_Block.gif",
+	"WhiteStone" : "White_Block.gif",
+	"BotOneText" : "00ffff",
+	"BotTwoText" : "004d4d"
+  }
+]
