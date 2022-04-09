@@ -71,7 +71,7 @@ class TreeManager:
     def set_available_moves(self, block_moves):
         if self.player != self.root_player:
             leading = set(self.data.get_moves()[self.root_player]['Leading']) # Adjacent Plus C-1
-            print("Move Taken Adjacnet Was", self.get_point(self.move), [self.get_point(y) for y in self.data.get_all_adjacent(self.move)])
+            #print("Move Taken Adjacnet Was", self.get_point(self.move), [self.get_point(y) for y in self.data.get_all_adjacent(self.move)])
             return self.data.get_moves()[self.root_player]['Leading']
         else:
             return block_moves
@@ -186,11 +186,11 @@ class TreeManager:
             if self.node_successful or self.node_complete:
                 thread.cancel()
                 break
-        print("Status   ", "Passes  ", "Time")
-        print(self.node_successful, "     " + str(passes), "     ", time.time() - time_start)
+        #print("Status   ", "Passes  ", "Time")
+        #print(self.node_successful, "     " + str(passes), "     ", time.time() - time_start)
 
     def stop_monte_carlo_search(self):
-        print("Time Passed")
+        #print("Time Passed")
         self.search = False
 
     def update_count(self):

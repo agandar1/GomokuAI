@@ -1,5 +1,6 @@
 import pygame
 import math
+from time import sleep
 
 class Button:
     def __init__(self, x, y, image):
@@ -16,22 +17,21 @@ class Button:
 
 
 class Game:
-    def __init__(self, screen, bot_first, human_playing, colors, ltheme, dtheme, bot1, bot2):
+    def __init__(self, screen, bot_first, colors, ltheme, dtheme, bot1, bot2, slow_mode):
         self.screen = screen
-        self.bot = bot1
-        self.bot2 = bot2
+        self.bot, self.bot2 = bot1, bot2
+        self.slow_mode = slow_mode
         self.running, self.game_over = True, False
-        self.human_playing = human_playing
+        self.human_playing = True
         self.colors = colors
         self.ltheme, self.dtheme = ltheme, dtheme
         self.theme = ltheme
         coords = [[62+(49*x), 122+(49*y), -1] for x in range(19) for y in range(19)]
         self.points = [coords[x:x+19] for x in range(0, len(coords), 19)]
+        self.black_turn = True
         if bot_first:
             self.place_piece(self.bot.start(), True)
             self.black_turn = False
-        else:
-            self.black_turn = True
 
     def nearest(self, pos):
         """find which point is closest to the mouse"""
@@ -116,9 +116,19 @@ class Game:
         self.check_input()
         bot2_turn = True
         while (not self.game_over and not self.human_playing and self.running):
-            keys = pygame.key.get_pressed()
-            pygame.event.pump()
-            if (keys[pygame.K_SPACE]):
+            if (self.slow_mode):
+                keys = pygame.key.get_pressed()
+                pygame.event.pump
+                if (keys[pygame.K_SPACE]):
+                    if bot2_turn:
+                        move = self.bot2.turn(move)
+                        bot2_turn = False
+                    else:
+                        move = self.bot.turn(move)
+                        bot2_turn = True
+                    self.place_piece(move, True)
+                    sleep(0.1)
+            else:
                 if bot2_turn:
                     move = self.bot2.turn(move)
                     bot2_turn = False
@@ -126,9 +136,9 @@ class Game:
                     move = self.bot.turn(move)
                     bot2_turn = True
                 self.place_piece(move, True)
-                self.draw_screen()
+            self.draw_screen()
             self.check_input()
-            
+
     def check_input(self):
         """check for user input"""
         pos = pygame.mouse.get_pos()
