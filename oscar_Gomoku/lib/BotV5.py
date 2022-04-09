@@ -39,6 +39,23 @@ class ComputerPlayer:
         self.data_manager.get_all_available_scores()
         self.player_type = 0
 
+    #---------- Compatibility Additions April 8, 2022 ----------#
+    def start(self):
+        self.set_player(0)
+        move = self.opening_move()
+        self.my_move(move)
+        return move
+
+    def new_board(self):
+        self.reset_variables()
+
+    def turn(self, op_move):
+        self.op_move(op_move)
+        move = self.calc_move()
+        self.my_move(move)
+        return move
+    #---------- End Compatibility Additions ----------#
+
     def set_player(self, player):
         self.player_type = player
 
@@ -52,8 +69,8 @@ class ComputerPlayer:
         tree_node = tree.TreeManager(0, 0, chosen, leading[chosen], self.data_manager, self.structure_data)
         tree_node.monte()
         path = tree_node.get_path()
-        for x in path:
-            print(self.get_point(x), [self.get_point(y) for y in path[x]])
+#        for x in path:
+ #           print(self.get_point(x), [self.get_point(y) for y in path[x]])
 
     def get_layer_moves(self, influence, layer, display):
         self.data_manager.pull_information()
@@ -61,7 +78,7 @@ class ComputerPlayer:
             moves = self.data_manager.get_layer_one(influence)
             return moves
         elif layer == 1:
-            moves = self.data_manager.get_layer_two(influence, display is 1)
+            moves = self.data_manager.get_layer_two(influence, display == 1)
             return moves
         else:
             info_dict = self.data_manager.get_moves()[influence]
@@ -97,16 +114,16 @@ class ComputerPlayer:
 
     def calc_move(self):
         move_options, move_type = self.tier_one_calculator(0, 1, self.data_manager)
-        print("!", move_type)
+        #print("!", move_type)
         move_chosen = self.choose_move(move_options)
-        print("Move", move_type, move_chosen, [self.get_point(point_index) for point_index in move_options])
+        #print("Move", move_type, move_chosen, [self.get_point(point_index) for point_index in move_options])
 
         return move_chosen
 
     # ToDo: Reintroduce Parameters, Base On Points, Original, Harsh, Bot, Op, Mix
     def choose_move(self, choice_list):
         if len(choice_list) == 1:
-            print(choice_list)
+            #print(choice_list)
             return self.get_point(choice_list[0])
         else:
             choice_list = set(choice_list)
@@ -241,7 +258,7 @@ class ComputerPlayer:
                         t = {}
                         for k, v in temp.items():
                             t.setdefault(v, []).append(k)
-                        print(t)
+                        #print(t)
                         return t[max(t.keys())], "Op Leading Multi Combo", True
                     # return list(move_data[player]['Leading_Combo']), "Op Leading Combo Multi", True
             else:

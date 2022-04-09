@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import sys
+sys.path.insert(0, 'oscar_Gomoku')
 from gui import *
 from bot import Bot
 from bot_2 import Bot as oldBot
+from lib import BotV5 as oscar_Bot
 
 # The engine may work with any gomoku bot, as long as it has the following methods:
 #---------------- start(): ----------------#
@@ -18,11 +21,27 @@ from bot_2 import Bot as oldBot
 
 
 # Initialize bots that will be used
-first = Bot(19)
-second = oldBot(19)
+#second = Bot(19)
+first_bot = Bot(19)
+second_bot = oscar_Bot.ComputerPlayer(19, 5)
+
+# Game options
+bot_first = False # does the bot go first by default?
+slow_mode = True # need to press space between moves in ai_vs_ai
+
+# Initialize the game
+game = Game(
+    screen,
+    bot_first,
+    colors,
+    ltheme,
+    dtheme,
+    first_bot,
+    second_bot,
+    slow_mode
+)
 
 # Run main game loop
-game = Game(screen, False, True, colors, ltheme, dtheme, first, second)
 while game.running:
     clock.tick(fps)
     game.check_input()

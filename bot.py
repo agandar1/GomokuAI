@@ -147,7 +147,13 @@ class Bot:
         if (val >= 8):
             available = [c for c in coords if board[c[0]][c[1]] == 1]
             random.shuffle(available)
-            return max(available, key=lambda x: scores[x[0]][x[1]])
+            #print(coords)
+            #print([[board[x[0]][x[1]]] for x in coords])
+            #print(val)
+            #print(available)
+            #input()
+            best = max(available, key=lambda x: scores[x[0]][x[1]])
+            return best
         # otherwise just get most valuable spot
         else:
             return self.highest_spot(board, scores, enemy_scores)

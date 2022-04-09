@@ -188,13 +188,13 @@ class TreeManager:
             if self.node_successful or self.node_complete:
                 thread.cancel()
                 break
-        print("Status   ", "Passes  ", "Time")
-        print(self.node_successful, "     " + str(passes), "     ", time.time() - time_start)
+        #print("Status   ", "Passes  ", "Time")
+        #print(self.node_successful, "     " + str(passes), "     ", time.time() - time_start)
         if self.node_successful:
             self.print_tree()
 
     def stop_monte_carlo_search(self):
-        print("Time Passed")
+        #print("Time Passed")
         self.search = False
 
     def update_count(self):
@@ -214,7 +214,7 @@ class TreeManager:
         color = (YELLOW if len(print_string) != 0 else RED) if final else (BLUE if self.root_player == self.player else NORMAL)
         space = ' ' * 2 * (self.depth + 1) if final else ' ' * 2 * self.depth
         turn = self.depth + 2 if final else self.depth + 1
-        print(color + space + 'Turn:', turn, print_string, "Children:", self.node_amount, "Valid Children:", self.node_amount_successful, END)
+        #print(color + space + 'Turn:', turn, print_string, "Children:", self.node_amount, "Valid Children:", self.node_amount_successful, END)
 
     def print_tree(self):
         if self.node_successful or SHOW_FULL:
