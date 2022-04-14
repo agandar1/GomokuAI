@@ -1,6 +1,7 @@
 import pygame
 import math
 from time import sleep
+from network import Network
 
 class Button:
     def __init__(self, x, y, image):
@@ -23,6 +24,8 @@ class Game:
         self.slow_mode = slow_mode
         self.running, self.game_over = True, False
         self.human_playing = True
+        self.player_1 = self.black_turn = True
+        self.player_2 = self.black_turn = False
         self.colors = colors
         self.ltheme, self.dtheme = ltheme, dtheme
         self.theme = ltheme
@@ -202,8 +205,35 @@ class Game:
         # finally flip display
         pygame.display.flip()
 
+
+    def read_pos(self, client):
+        """Get input and send it to the client"""
+        while not self.game_over:
+            if self.black_turn == self.player_1:
+                pos = pygame.mouse.get_pos()
+                for event in pygame.event.get():
+                    if(event.type == pygame.QUIT):
+                        self.running = False
+                    elif(event.type == pygame.MOUSEBUTTONDOWN):
+                        move = self.place_piece(pos, False)
+                        client.send(move)
+                        self.black_turn = self.player_2
+            else:
+                pos = pygame.mouse.get_pos()
+                for event in pygame.event.get():
+                    if (event.type == pygame.QUIT):
+                        self.running = False
+                    elif (event.type == pygame.MOUSEBUTTONDOWN):
+                        move = self.place_piece(pos, False)
+                        client.send(move)
+                        # return move
+                        self.black_turn = self.player_1
+
+
 # Global Variables
 screen = pygame.display.set_mode((1000, 1060))
+n = Network()
+startPos = read_pos(n.getPos())  # getting first and second player
 clock = pygame.time.Clock()
 fps = 60
 colors = {
