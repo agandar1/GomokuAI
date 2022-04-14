@@ -206,34 +206,34 @@ class Game:
         pygame.display.flip()
 
 
-    def read_pos(self, client):
-        """Get input and send it to the client"""
-        while not self.game_over:
-            if self.black_turn == self.player_1:
-                pos = pygame.mouse.get_pos()
-                for event in pygame.event.get():
-                    if(event.type == pygame.QUIT):
-                        self.running = False
-                    elif(event.type == pygame.MOUSEBUTTONDOWN):
-                        move = self.place_piece(pos, False)
-                        client.send(move)
-                        self.black_turn = self.player_2
-            else:
-                pos = pygame.mouse.get_pos()
-                for event in pygame.event.get():
-                    if (event.type == pygame.QUIT):
-                        self.running = False
-                    elif (event.type == pygame.MOUSEBUTTONDOWN):
-                        move = self.place_piece(pos, False)
-                        client.send(move)
+    #def read_pos(self, client):
+        #"""Get input and send it to the client"""
+        #while not self.game_over:
+            #if self.black_turn == self.player_1:
+                #pos = pygame.mouse.get_pos()
+                #for event in pygame.event.get():
+                    #if(event.type == pygame.QUIT):
+                        #self.running = False
+                    #elif(event.type == pygame.MOUSEBUTTONDOWN):
+                        #move = self.place_piece(pos, False)
+                        #client.send(move)
+                        #self.black_turn = self.player_2
+            #else:
+                #pos = pygame.mouse.get_pos()
+                #for event in pygame.event.get():
+                    #if (event.type == pygame.QUIT):
+                        #self.running = False
+                    #elif (event.type == pygame.MOUSEBUTTONDOWN):
+                        #move = self.place_piece(pos, False)
+                        #client.send(move)
                         # return move
-                        self.black_turn = self.player_1
+                        #self.black_turn = self.player_1
 
 
 # Global Variables
 screen = pygame.display.set_mode((1000, 1060))
-n = Network()
-startPos = read_pos(n.getPos())  # getting first and second player
+#n = Network()
+#startPos = read_pos(n.getPos())  # getting first and second player
 clock = pygame.time.Clock()
 fps = 60
 colors = {
