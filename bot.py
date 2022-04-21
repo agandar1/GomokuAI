@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from monte_carlo import *
 
 class Bot:
     def __init__(self, size):
@@ -7,11 +8,13 @@ class Bot:
         self.board = np.full((size, size), 1, dtype=int)
         self.monomials = self.gen_monomials()
         self.score_board = self.network(np.copy(self.board))
+        self.tree = MonteCarlo(self.board, 2)
 
     def new_board(self):
         """make a new empty board size x size filled with 1's"""
         self.board = np.full((self.size, self.size), 1, dtype=int)
         self.score_board = self.network(np.copy(self.board))
+        self.tree.reset_tree(self.board)
         
     def gen_monomials(self):
         """make a list of all monomial coordinates"""
@@ -147,11 +150,6 @@ class Bot:
         if (val >= 8):
             available = [c for c in coords if board[c[0]][c[1]] == 1]
             random.shuffle(available)
-            #print(coords)
-            #print([[board[x[0]][x[1]]] for x in coords])
-            #print(val)
-            #print(available)
-            #input()
             best = max(available, key=lambda x: scores[x[0]][x[1]])
             return best
         # otherwise just get most valuable spot
@@ -161,14 +159,19 @@ class Bot:
     def start(self):
         """run when the bot will start the game"""
         # just picks random spot near the center
+        self.tree.set_turn(2)
         move = [random.randint(7, 11), random.randint(7, 11)]
         self.board[move[0]][move[1]] = 2
+        self.tree.apply_move(move)
         return move
 
     def turn(self, opponent_move):
         """takes opponent's last move (x, y) and returns bot's move (x, y)"""
         # mark opponent's last move
+        self.tree.set_turn(0)
         self.board[opponent_move[0]][opponent_move[1]] = 0
+        self.tree.apply_move(opponent_move)
+        self.tree.set_turn(2)
 
         # calculate bot's and opponent's scores
         self.score_board = self.network(self.board)
@@ -185,7 +188,10 @@ class Bot:
             best_move = self.build(self.board, self.score_board, enemy_scores, best_monos[0]) 
 
         # place piece and send choice back to gui
+        self.tree.search_tree()
+        best_move = self.tree.choose_best_move()
         self.board[best_move[0]][best_move[1]] = 2
+        self.tree.apply_move(best_move)
         return best_move
         
 bot = Bot(19)
