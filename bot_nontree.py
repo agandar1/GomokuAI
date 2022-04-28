@@ -1,6 +1,5 @@
 import numpy as np
 import random
-from monte_carlo import MonteCarlo
 
 class Bot:
     def __init__(self, size):
@@ -8,15 +7,11 @@ class Bot:
         self.board = np.full((size, size), 1, dtype=int)
         self.monomials = self.gen_monomials()
         self.score_board = self.network(np.copy(self.board))
-        self.tree = MonteCarlo()
-        self.turns_cnt = 0
 
     def new_board(self):
         """make a new empty board size x size filled with 1's"""
         self.board = np.full((self.size, self.size), 1, dtype=int)
         self.score_board = self.network(np.copy(self.board))
-        self.tree.reset_tree()
-        self.turns_cnt = 0
         
     def gen_monomials(self):
         """make a list of all monomial coordinates"""
@@ -77,7 +72,7 @@ class Bot:
         """get the value for a single monomial"""
         # calculate value of the monomial, closed monomials are worth 0
         val = np.prod([board[x[0]][x[1]] for x in mono])
-        if (val == 8 and self.is_closed(board, mono)):
+        if ((val == 8 or (for_self and 4 <= val <= 8 )) and self.is_closed(board, mono)):
             val = 0
         return val
         
@@ -97,20 +92,20 @@ class Bot:
         temp = np.where(temp != 0, temp, 2)
         return np.where(temp != 3, temp, 0)
     
-    def highest_spots(self, board, scores):
+    def highest_spot(self, board, scores, enemy_scores):
         """find bot's most valuable spot"""
-        available = [[x, y] for x in range(19) for y in range(19) if board[x][y] == 1]
-        flat_scores = np.copy(scores).flatten()
-        highest = np.sort(flat_scores)
-        available = [[a[0], a[1]] for a in available if scores[a[0]][a[1]] >= highest[2]]
-        return available
+        coords = [[x, y] for x in range(19) for y in range(19) if board[x][y] == 1]
+        random.shuffle(coords)
+        return max(coords, key=lambda x: scores[x[0]][x[1]])
 
-    def block(self, board, scores, monos):
+    def block(self, board, scores, enemy_scores, monos):
         """find the best place to block a monomial"""
         coords, val = monos[1][0], monos[1][1]
         # block closed 4, or try to block open 4
         if (val == 16):
             available = [c for c in coords if board[c[0]][c[1]] == 1]
+            random.shuffle(available)
+            return max(available, key=lambda x: scores[x[0]][x[1]])
         # pick most beneficial spot to block open 3 or starting move
         elif (val == 8):
             taken = [c for c in coords if board[c[0]][c[1]] != 1]
@@ -132,62 +127,58 @@ class Bot:
             else:
                 available = [[x+1, y-1], [last_x-1, last_y+1]]
                 available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
+            # choose the one best for the bot
+            random.shuffle(available)
+            move = max(available, key=lambda x: scores[x[0]][x[1]])
+            return move
         # choose a spot close to the opponent's opening
         elif (val == 2):
-            available = [[x, y] for x in range(19) for y in range(19) if scores[x][y] == 16]
+            available = [[x, y] for x in range(19) for y in range(19) if board[x][y] == 1]
+            random.shuffle(available)
+            return max(available, key=lambda x: enemy_scores[x[0]][x[1]])
         # otherwise just try to build
         else:
-            available = self.build(board, scores, monos[0])[0]
-        return available, False
+            return self.build(board, scores, enemy_scores, monos[0])
             
-    def build(self, board, scores, best_mono):
+    def build(self, board, scores, enemy_scores, best_mono):
         """pick a spot to try to win"""
         coords, val = best_mono
         # immediately win if we have 4 in a row or pick best spot in open 3
         if (val >= 8):
             available = [c for c in coords if board[c[0]][c[1]] == 1]
-            if (len(available) > 0):
-                return available, True
+            random.shuffle(available)
+            best = max(available, key=lambda x: scores[x[0]][x[1]])
+            return best
         # otherwise just get most valuable spot
-        return self.highest_spots(board, scores), False
+        else:
+            return self.highest_spot(board, scores, enemy_scores)
         
     def start(self):
         """run when the bot will start the game"""
         # just picks random spot near the center
-        move = (random.randint(7, 11), random.randint(7, 11))
+        move = [random.randint(7, 11), random.randint(7, 11)]
         self.board[move[0]][move[1]] = 2
-        self.tree.apply_move(move, 2)
-        self.turns_cnt += 1
         return move
 
     def turn(self, opponent_move):
         """takes opponent's last move (x, y) and returns bot's move (x, y)"""
         # mark opponent's last move
         self.board[opponent_move[0]][opponent_move[1]] = 0
-        self.turns_cnt += 1
-        self.tree.apply_move(tuple(opponent_move), 0)
 
         # calculate bot's and opponent's scores
         self.score_board = self.network(self.board)
         enemy_board = self.gen_opponent_board(self.board)
+        enemy_scores = self.network(enemy_board)
 
         # see who is ahead
         best_monos = self.find_best_monos(self.board, enemy_board)
-        if ((best_monos[1][1] > best_monos[0][1]) or self.turns_cnt < 3):
+        if (best_monos[1][1] > best_monos[0][1] and best_monos[1][1] != 4):
             # block if enemy is ahead
-            best_moves, immediate = self.block(self.board, self.score_board, best_monos)
+            best_move = self.block(self.board, self.score_board, enemy_scores, best_monos)
         else:
             # ignore enemy and build if bot is ahead
-            best_moves, immediate = self.build(self.board, self.score_board, best_monos[0]) 
-
-        random.shuffle(best_moves)
-        best_move = max(best_moves, key=lambda x: self.score_board[x[0]][x[1]]) 
+            best_move = self.build(self.board, self.score_board, enemy_scores, best_monos[0]) 
 
         # place piece and send choice back to gui
-        if self.turns_cnt > 1 and best_monos[1][1] < 16 and best_monos[0][1] < 16 and not immediate:
-            best_move = self.tree.choose_best_move()
-            print("chose:", best_move)
         self.board[best_move[0]][best_move[1]] = 2
-        self.tree.apply_move(tuple(best_move), 2)
-        self.turns_cnt += 1
         return best_move
