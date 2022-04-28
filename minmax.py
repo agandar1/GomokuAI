@@ -217,16 +217,14 @@ class Bot:
 
             # return forced/urgent spots immediately
             if ai_val == 16 or op_val == 16:
-                open = [p for p in mono if board[p[0]][p[1]] == 1]
+                available = [p for p in mono if board[p[0]][p[1]] == 1]
                 if ai_mono[0] != 1 and ai_l == 1:
-                    open.append(outer[0])
+                    available.append(outer[0])
                 if ai_mono[-1] != 1 and ai_r == 1:
-                    open.append(outer[1])
-                print("found 4", open)
-                return open
+                    available.append(outer[1])
+                print("found 4", available)
+                return available
         for mono in self.monomials:
-            print(len(self.monomials))
-            #print(mono)
             ai_mono = [board[p[0]][p[1]] for p in mono]
             op_mono = self.flip_mono(ai_mono)
             ai_val, op_val = np.prod(ai_mono), np.prod(op_mono)
@@ -240,20 +238,32 @@ class Bot:
             else:
                 ai_r = -1
             op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
-            #print(ai_mono, "-", ai_val, "/", op_mono, "-", op_val)
             if (op_val == 8 or ai_val == 8) and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
-                open = [p for p in mono if board[p[0]][p[1]] == 1]
-                if op_mono[0] != 1 and ai_l == 1:
-                    open.append(outer[0])
-                if op_mono[-1] != 1 and ai_r == 1:
-                    open.append(outer[1])
-                print("found open 3", open)
-                return open
+                taken = [p for p in mono if board[p[0]][p[1]] != 1]
+                x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
+                change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
+                # get available vertical spots
+                if (change_x == 0):
+                    available = [[x, y-1], [last_x, last_y+1]]
+                    available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
+                # get available horizontal spots
+                elif (change_y == 0):
+                    available = [[x-1, y], [last_x+1, last_y]]
+                    available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
+                # get available negative slope diagonal spots
+                elif (change_x > 0 and change_y > 0):
+                    available = [[x-1, y-1], [last_x+1, last_y+1]]
+                    available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
+                # get available positive slope diagonal spots
+                else:
+                    available = [[x+1, y-1], [last_x-1, last_y+1]]
+                    available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
+                print("found 3", available)
+                return available
             
-        open = [[x, y] for x in range(19) for y in range(19)
+        available = [[x, y] for x in range(19) for y in range(19)
                 if board[x][y] == 1 and not self.lonely_spot(board, [x, y])]
-        print("just all")
-        return open
+        return available
 
     def minimax(self, board, depth, max_depth, ai_turn, alpha, beta):
         board = np.copy(board)
