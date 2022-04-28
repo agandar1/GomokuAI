@@ -3,7 +3,9 @@ import sys
 sys.path.insert(0, 'oscar_Gomoku')
 from gui import *
 from bot import Bot
-from bot_2 import Bot as oldBot
+#from bot_2 import Bot as oldBot
+from bot_nontree import Bot as oldBot
+from minmax import Bot as mmBot
 from lib import BotV5 as oscar_Bot
 
 # The engine may work with any gomoku bot, as long as it has the following methods:
@@ -21,8 +23,8 @@ from lib import BotV5 as oscar_Bot
 
 
 # Initialize bots that will be used
-#second = Bot(19)
-first_bot = Bot(19)
+first_bot = mmBot()
+#second_bot = oldBot(19)
 second_bot = oscar_Bot.ComputerPlayer(19, 5)
 
 # Game options
