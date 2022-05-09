@@ -2,10 +2,8 @@
 import sys
 sys.path.insert(0, 'oscar_Gomoku')
 from gui import *
-from bot import Bot
 #from bot_2 import Bot as oldBot
-from bot_nontree import Bot as oldBot
-from minmax import Bot as mmBot
+from minimax import Bot as mmBot
 from lib import BotV5 as oscar_Bot
 
 # The engine may work with any gomoku bot, as long as it has the following methods:

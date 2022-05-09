@@ -186,7 +186,7 @@ class Bot:
         if pieces == 5:
             val = 100000
         elif pieces == 4:
-            val = 4800 if open_outer >= 2 else 500
+            val = 4800 if open_outer >= 2 else 600
         elif pieces == 3:
             val = 600 if open_outer >= 2 else 200
         elif pieces == 2:
@@ -198,6 +198,28 @@ class Bot:
         mono_patterns = [self.mono_pattern(board, m) for m in self.monomials]
         mono_values = [self.mono_value(ai) - self.mono_value(op) for ai, op in mono_patterns]
         return sum(mono_values)
+
+    def find_open3_spots(self, mono, board):
+        taken = [p for p in mono if board[p[0]][p[1]] != 1]
+        x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
+        change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
+        # get available vertical spots
+        if (change_x == 0):
+            available = [[x, y-1], [last_x, last_y+1]]
+            available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
+        # get available horizontal spots
+        elif (change_y == 0):
+            available = [[x-1, y], [last_x+1, last_y]]
+            available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
+        # get available negative slope diagonal spots
+        elif (change_x > 0 and change_y > 0):
+            available = [[x-1, y-1], [last_x+1, last_y+1]]
+            available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
+        # get available positive slope diagonal spots
+        else:
+            available = [[x+1, y-1], [last_x-1, last_y+1]]
+            available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
+        return available
 
     def open_spots(self, board):
         for mono in self.monomials:
@@ -238,27 +260,13 @@ class Bot:
             else:
                 ai_r = -1
             op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
-            if (op_val == 8 or ai_val == 8) and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
-                taken = [p for p in mono if board[p[0]][p[1]] != 1]
-                x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
-                change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
-                # get available vertical spots
-                if (change_x == 0):
-                    available = [[x, y-1], [last_x, last_y+1]]
-                    available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
-                # get available horizontal spots
-                elif (change_y == 0):
-                    available = [[x-1, y], [last_x+1, last_y]]
-                    available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
-                # get available negative slope diagonal spots
-                elif (change_x > 0 and change_y > 0):
-                    available = [[x-1, y-1], [last_x+1, last_y+1]]
-                    available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
-                # get available positive slope diagonal spots
-                else:
-                    available = [[x+1, y-1], [last_x-1, last_y+1]]
-                    available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
-                print("found 3", available)
+            if op_val == 8 and (op_mono[0] == 1 or op_l == 1) and (op_mono[-1] == 1 or op_r == 1):
+                available = self.find_open3_spots(mono, board)
+                print("found enemy 3")
+                return available
+            if ai_val == 8 and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
+                available = self.find_open3_spots(mono, board)
+                print("found own 3")
                 return available
             
         available = [[x, y] for x in range(19) for y in range(19)
