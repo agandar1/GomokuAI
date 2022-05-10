@@ -198,23 +198,23 @@ class Bot:
         # get available vertical spots
         if (change_x == 0):
             outer = [[x, y-1], [last_x, last_y+1]]
-            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
-            available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
+            available = [[o[0], o[1]] for o in outer if 0 <= o[0] <= 19 and 0 <= o[1] <= 19 and board[o[0]][o[1]] == 1]
+            available += [[x, y+i] for i in range(len(taken)) if 0 <= x <= 19 and 0 <= y+i <= 19 and board[x][y+i] == 1]
         # get available horizontal spots
         elif (change_y == 0):
             outer = [[x-1, y], [last_x+1, last_y]]
-            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
-            available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
+            available = [[o[0], o[1]] for o in outer if 0 <= o[0] <= 19 and 0 <= o[1] <= 19 and board[o[0]][o[1]] == 1]
+            available += [[x+i, y] for i in range(len(taken)) if 0 <= x+i <= 19 and 0 <= y <= 19 and board[x+i][y] == 1]
         # get available negative slope diagonal spots
         elif (change_x > 0 and change_y > 0):
             outer = [[x-1, y-1], [last_x+1, last_y+1]]
-            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
-            available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
+            available = [[o[0], o[1]] for o in outer if 0 <= o[0] <= 19 and 0 <= o[1] <= 19 and board[o[0]][o[1]] == 1]
+            available += [[x+i, y+i] for i in range(len(taken)) if 0 <= x+i <= 19 and 0 <= y+i <= 19 and board[x+i][y+i] == 1]
         # get available positive slope diagonal spots
         else:
             outer = [[x+1, y-1], [last_x-1, last_y+1]]
-            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
-            available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
+            available = [[o[0], o[1]] for o in outer if 0 <= o[0] <= 19 and 0 <= o[1] <= 19 and board[o[0]][o[1]] == 1]
+            available += [[x-i, y+i] for i in range(len(taken)) if 0 <= x-i <= 19 and 0 <= y+i <= 19 and board[x-i][y+i] == 1]
         return available, split
 
     def open_spots(self, board):
@@ -263,33 +263,13 @@ class Bot:
                 return available
         for mono in self.monomials:
             ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
-            # outer = self.get_outer(board, mono)
-            # if outer[0]:
-            #     ai_l = board[outer[0][0]][outer[0][1]]
-            # else:
-            #     ai_l = -1
-            # if outer[1]:
-            #     ai_r = board[outer[1][0]][outer[1][1]]
-            # else:
-            #     ai_r = -1
-            # op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
             if ai_val == 8:
                 available, split = self.find_open3_spots(mono, board)
-                if len(available) - split == 2:
+                if len(available) - split == 2 and split != 2:
                     print("found own 3", available)
                     return available
         for mono in self.monomials:
             ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
-            # outer = self.get_outer(board, mono)
-            # if outer[0]:
-            #     ai_l = board[outer[0][0]][outer[0][1]]
-            # else:
-            #     ai_l = -1
-            # if outer[1]:
-            #     ai_r = board[outer[1][0]][outer[1][1]]
-            # else:
-            #     ai_r = -1
-            # op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
             if op_val == 8:
                 available, split = self.find_open3_spots(mono, board)
                 if len(available) - split == 2:
