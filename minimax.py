@@ -11,36 +11,20 @@ class Bot:
     def new_board(self):
         """make a new empty board size x size filled with 1's"""
         self.board = np.full((self.size, self.size), 1, dtype=int)
-        self.score_board = self.network(np.copy(self.board))
 
-    def spot_value(self, board, spot):
-        """calculate the value of a single spot on the board"""
-        return sum([self.mono_prod(board, m, False) for m in self.find_monomials(spot)])
+    def monos_and_vals(self, board, mono):
+        ai_mono = [board[p[0]][p[1]] for p in mono]
+        op_mono = self.flip_mono(ai_mono)
+        return ai_mono, op_mono, np.prod(ai_mono), np.prod(op_mono)
 
-    def network(self, board):
-        """calculate values of all spots to create a score board"""
-        stacks = 1
-        scores = np.copy(board)
-        for x in range(stacks):
-            for i in range(self.size):
-                for j in range(self.size):
-                    scores[i][j] = self.spot_value(board, [i, j])
-        return scores
-
-    def mono_prod(self, board, mono, for_self):
-        """get the value for a single monomial"""
-        # calculate value of the monomial, closed monomials are worth 0
-        val = np.prod([board[x[0]][x[1]] for x in mono])
-        return val
-
-    def lonely_spot(self, board, spot):
+    def lonely_spot(self, board, spot, max_range):
         """check if this spot is too far away from other pieces"""
         x, y = spot[0], spot[1]
         directions = [(1, 0), (0, 1), (1, 1), (-1, 1)]
         for d in directions:
             counts = [0, 0] 
             for n in ((1, 0), (-1, 1)):
-                for i in range (1, 2):
+                for i in range (1, max_range):
                     newx, newy = x+(n[0]*(i*d[0])), y+(n[0]*(i*d[1]))
                     if (0 <= newx <= 18 and 0 <= newy < 18):
                         if (board[newx][newy] != 1):
@@ -49,23 +33,12 @@ class Bot:
 
     def winner(self, board):
         """check if someone won"""
-        for x in range(19):
-            for y in range(19):
-                player = board[x][y]
-                if player == 1:
-                    continue
-                directions = [(1, 0), (0, 1), (1, 1), (-1, 1)]
-                for d in directions:
-                    counts = [0, 0] 
-                    for n in ((1, 0), (-1, 1)):
-                        for i in range (1, 5):
-                            newx, newy = x+(n[0]*(i*d[0])), y+(n[0]*(i*d[1]))
-                            if (0 <= newx <= 18 and 0 <= newy < 18):
-                                if (board[newx][newy] == player):
-                                    counts[n[1]] += 1
-                                else: break
-                    if (counts[0] + counts[1] >= 4):
-                        return player
+        for m in self.monomials:
+            ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, m)
+            if ai_val >= 32:
+                return 2
+            if op_val >= 32:
+                return 0
         return 1
         
     def gen_monomials(self):
@@ -118,15 +91,10 @@ class Bot:
         else:
             result.append(False)
         return result
-        #left = board[l[0]][l[1]] if (0 <= l[0] < 19 and 0 <= l[1] < 19) else 0
-        #right = board[r[0]][r[1]] if (0 <= r[0] < 19 and 0 <= r[1] < 19) else 0
-        #return left, right
 
     def mono_pattern(self, board, monomial):
         """get the pattern of a single monomial on a board"""
-        ai_mono = [board[p[0]][p[1]] for p in monomial]
-        op_mono = self.flip_mono(ai_mono)
-        ai_val, op_val = np.prod(ai_mono), np.prod(op_mono)
+        ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, monomial)
         outer = self.get_outer(board, monomial)
         if outer[0]:
             ai_l = board[outer[0][0]][outer[0][1]]
@@ -186,7 +154,7 @@ class Bot:
         if pieces == 5:
             val = 100000
         elif pieces == 4:
-            val = 4800 if open_outer >= 2 else 500
+            val = 4800 if open_outer >= 2 else 600
         elif pieces == 3:
             val = 600 if open_outer >= 2 else 200
         elif pieces == 2:
@@ -199,11 +167,31 @@ class Bot:
         mono_values = [self.mono_value(ai) - self.mono_value(op) for ai, op in mono_patterns]
         return sum(mono_values)
 
+    def find_open3_spots(self, mono, board):
+        taken = [p for p in mono if board[p[0]][p[1]] != 1]
+        x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
+        change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
+        # get available vertical spots
+        if (change_x == 0):
+            available = [[x, y-1], [last_x, last_y+1]]
+            available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
+        # get available horizontal spots
+        elif (change_y == 0):
+            available = [[x-1, y], [last_x+1, last_y]]
+            available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
+        # get available negative slope diagonal spots
+        elif (change_x > 0 and change_y > 0):
+            available = [[x-1, y-1], [last_x+1, last_y+1]]
+            available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
+        # get available positive slope diagonal spots
+        else:
+            available = [[x+1, y-1], [last_x-1, last_y+1]]
+            available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
+        return available
+
     def open_spots(self, board):
         for mono in self.monomials:
-            ai_mono = [board[p[0]][p[1]] for p in mono]
-            op_mono = self.flip_mono(ai_mono)
-            ai_val, op_val = np.prod(ai_mono), np.prod(op_mono)
+            ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
             outer = self.get_outer(board, mono)
             if outer[0]:
                 ai_l = board[outer[0][0]][outer[0][1]]
@@ -225,9 +213,7 @@ class Bot:
                 print("found 4", available)
                 return available
         for mono in self.monomials:
-            ai_mono = [board[p[0]][p[1]] for p in mono]
-            op_mono = self.flip_mono(ai_mono)
-            ai_val, op_val = np.prod(ai_mono), np.prod(op_mono)
+            ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
             outer = self.get_outer(board, mono)
             if outer[0]:
                 ai_l = board[outer[0][0]][outer[0][1]]
@@ -238,31 +224,17 @@ class Bot:
             else:
                 ai_r = -1
             op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
-            if (op_val == 8 or ai_val == 8) and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
-                taken = [p for p in mono if board[p[0]][p[1]] != 1]
-                x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
-                change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
-                # get available vertical spots
-                if (change_x == 0):
-                    available = [[x, y-1], [last_x, last_y+1]]
-                    available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
-                # get available horizontal spots
-                elif (change_y == 0):
-                    available = [[x-1, y], [last_x+1, last_y]]
-                    available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
-                # get available negative slope diagonal spots
-                elif (change_x > 0 and change_y > 0):
-                    available = [[x-1, y-1], [last_x+1, last_y+1]]
-                    available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
-                # get available positive slope diagonal spots
-                else:
-                    available = [[x+1, y-1], [last_x-1, last_y+1]]
-                    available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
-                print("found 3", available)
+            if op_val == 8 and (op_mono[0] == 1 or op_l == 1) and (op_mono[-1] == 1 or op_r == 1):
+                available = self.find_open3_spots(mono, board)
+                print("found enemy 3", available)
+                return available
+            if ai_val == 8 and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
+                available = self.find_open3_spots(mono, board)
+                print("found own 3", available)
                 return available
             
         available = [[x, y] for x in range(19) for y in range(19)
-                if board[x][y] == 1 and not self.lonely_spot(board, [x, y])]
+                if board[x][y] == 1 and not self.lonely_spot(board, [x, y], 2)]
         return available
 
     def minimax(self, board, depth, max_depth, ai_turn, alpha, beta):
@@ -280,7 +252,6 @@ class Bot:
                 next_board[move[0]][move[1]] = 1
                 best = max(best, value)
                 best_move = move if value == best else best_move
-                #print("max:",best,"value:", value)
                 alpha = max(alpha, best)
                 if beta <= alpha:
                     break
@@ -293,7 +264,6 @@ class Bot:
                 value = self.minimax(next_board, depth+1, max_depth, True, alpha, beta)[0]
                 next_board[move[0]][move[1]] = 1
                 best = min(best, value)
-                #print("min:",best,"value:", value)
                 best_move = move if value == best else best_move
                 beta = min(beta, best)
                 if beta <= alpha:
@@ -308,8 +278,9 @@ class Bot:
         return (9, 9)
 
     def early_game(self, board):
-        scores = self.network(board)
-        available = [[x, y] for x in range(19) for y in range(19) if scores[x][y] == 16]
+        available = [[x, y] for x in range(19) for y in range(19)
+                if board[x][y] == 1 and not self.lonely_spot(board, [x, y], 2)]
+        print(available)
         return random.choice(available)
 
     def turn(self, opponent_move):
@@ -324,5 +295,4 @@ class Bot:
             best_move = self.minimax(self.board, 0, 2, True, np.NINF, np.inf)[1]
         self.board[best_move[0]][best_move[1]] = 2
         self.turn_cnt +=1
-        print(best_move)
         return best_move

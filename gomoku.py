@@ -2,24 +2,22 @@
 import sys
 sys.path.insert(0, 'oscar_Gomoku')
 from gui import *
-from bot import Bot
 #from bot_2 import Bot as oldBot
-from bot_nontree import Bot as oldBot
-from minmax import Bot as mmBot
+from minimax import Bot as mmBot
 from lib import BotV5 as oscar_Bot
 
 # The engine may work with any gomoku bot, as long as it has the following methods:
 #---------------- start(): ----------------#
-# takes no arguments and returns the bot's opening move coordinates in form [x, y]
-# [0, 0] is the top left corner, x increases horizontally and y increases vertically
+# takes no arguments and returns the bot's opening move coordinates in form (y, x)
+# (0, 0) is the top left corner, x increases horizontally and y increases vertically
 
 #-------------- new_board(): --------------#
 # takes no arguments and returns nothing
 # just completely resets the bot internally to prepare for the next game
 
 #---------- turn(opponent_move): ----------#
-# takes the opponent's last move as an argument, in form [x, y]
-# returns the bot's response move, also in form [x, y]
+# takes the opponent's last move as an argument, in form (y, x)
+# returns the bot's response move, also in form (y, x)
 
 
 # Initialize bots that will be used
