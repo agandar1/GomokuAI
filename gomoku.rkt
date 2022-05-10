@@ -36,6 +36,7 @@
 (define turn 2)
 (define winner #f)
 (define ai-turn #f)
+(define game-thread #f)
 
 (define (board-get row col)
   (vector-ref (vector-ref board row) col))
@@ -76,10 +77,16 @@
   (set! last-added empty)
   (set! turn 2)
   (set! winner #f)
+  (set! ai-turn #f)
+  (unless (equal? game-thread #f)
+    (kill-thread game-thread))
+  
   (send-command "new_game" (list 0 0) out1)
   (send-command "new_game" (list 0 0) out2)
-  (when (= game-type 3) (thread (lambda () (ai-vs-ai 0 name1 name2))))
-  (when (= game-type 4) (thread (lambda () (ai-vs-ai 0 name2 name1)))))
+  (when (= game-type 3)
+    (set! game-thread (thread (lambda () (ai-vs-ai 0 name1 name2)))))
+  (when (= game-type 4)
+    (set! game-thread (thread (lambda () (ai-vs-ai 0 name2 name1))))))
 
 (define (ai-vs-ai turn_cnt first_bot second_bot)
   ; recursive turn function, runs until a valid turn is made
@@ -211,9 +218,7 @@
           (add-piece (first point) (second point))
           (check-winner)
           (draw-pieces dc)
-          (when winner (draw-win-line dc))
-          (send-command "turn" point out1)
-          (send-command "turn" point out2))))
+          (when winner (draw-win-line dc)))))
     (define/public (manual-update-pieces)
       (define dc (send this get-dc))
       (draw-pieces dc)
