@@ -110,6 +110,7 @@
     (if (even? turn_cnt)
         (turn b_in b_out)
         (turn w_in w_out))
+    (sleep 1)
     (send canvas manual-update-pieces)
     (ai-vs-ai (add1 turn_cnt) first_bot second_bot))
   (set! ai-turn #t))
@@ -203,8 +204,8 @@
 (define frame
   (new frame%
        (label "Gomoku")
-       (width 700)
-       (height 700)))
+       (width 900)
+       (height 900)))
 
 (define my-canvas%
   (class canvas%
@@ -237,6 +238,11 @@
           (draw-pieces dc)
           (when winner (draw-win-line dc))))))
 
+(define status_msg
+  (new message%
+       (parent frame)
+       (label "Status Message...")))
+
 (define menu-bar
   (new menu-bar%
     (parent frame)))
@@ -261,6 +267,8 @@
   (label "&Exit")
   (parent game-menu)
   (callback (λ (m event)
+              (unless (equal? game-thread #f)
+                (kill-thread game-thread))
               (send-command "close" (list 0 0) out1)
               (send-command "close" (list 0 0) out2)
               (close-input-port in1)
@@ -299,5 +307,6 @@
                  (set! winner (list #t empty))
                  (new-game 4)
                  (send canvas refresh))))
+
 
 (send frame show #t)

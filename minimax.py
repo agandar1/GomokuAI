@@ -78,8 +78,24 @@ class Bot:
         p1, p2, p5 = monomial[0], monomial[1], monomial[4]
         change_x, change_y = p2[0] - p1[0], p2[1] - p1[1]
         # calculate the outer points using the change
-        l = [p1[0]-change_x, p1[1]-change_y]
-        r = [p5[0]+change_x, p5[1]+change_y]
+        l = False
+        r = False
+
+        for i in range(len(monomial)):
+            p = monomial[i]
+            if board[p[0]][p[1]] != 1:
+                l = [p[0]-change_x, p[1]-change_y]
+                break
+        for i in range(len(monomial)-1, -1, -1):
+            p = monomial[i]
+            if board[p[0]][p[1]] != 1:
+                r = [p[0]+change_x, p[1]+change_y]
+                break
+
+        if not l:
+            l = [p1[0]-change_x, p1[1]-change_y]
+        if not r:
+            r = [p1[0]+change_x, p1[1]+change_y]
         # only take the coordinates if it's within bounds
         result = []
         if 0 <= l[0] < 19 and 0 <= l[1] < 19:
@@ -171,25 +187,58 @@ class Bot:
         taken = [p for p in mono if board[p[0]][p[1]] != 1]
         x, y, last_x, last_y = taken[0][0], taken[0][1], taken[-1][0], taken[-1][1]
         change_x, change_y = mono[1][0] - mono[0][0], mono[1][1] - mono[0][1]
+        split = True if last_x-x >= 3 or last_y - y >= 3 else False
+        split = 0
+        x_dif , y_dif = last_x - x, last_y - y
+        if x_dif == 3 or y_dif == 3:
+            split = 1
+        elif x_dif == 4 or y_dif == 4:
+            split = 2
+        
         # get available vertical spots
         if (change_x == 0):
-            available = [[x, y-1], [last_x, last_y+1]]
+            outer = [[x, y-1], [last_x, last_y+1]]
+            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
             available += [[x, y+i] for i in range(len(taken)) if board[x][y+i] == 1]
         # get available horizontal spots
         elif (change_y == 0):
-            available = [[x-1, y], [last_x+1, last_y]]
+            outer = [[x-1, y], [last_x+1, last_y]]
+            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
             available += [[x+i, y] for i in range(len(taken)) if board[x+i][y] == 1]
         # get available negative slope diagonal spots
         elif (change_x > 0 and change_y > 0):
-            available = [[x-1, y-1], [last_x+1, last_y+1]]
+            outer = [[x-1, y-1], [last_x+1, last_y+1]]
+            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
             available += [[x+i, y+i] for i in range(len(taken)) if board[x+i][y+i] == 1]
         # get available positive slope diagonal spots
         else:
-            available = [[x+1, y-1], [last_x-1, last_y+1]]
+            outer = [[x+1, y-1], [last_x-1, last_y+1]]
+            available = [[o[0], o[1]] for o in outer if board[o[0]][o[1]] == 1]
             available += [[x-i, y+i] for i in range(len(taken)) if board[x-i][y+i] == 1]
-        return available
+        return available, split
 
     def open_spots(self, board):
+        for mono in self.monomials:
+            ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
+            outer = self.get_outer(board, mono)
+            if outer[0]:
+                ai_l = board[outer[0][0]][outer[0][1]]
+            else:
+                ai_l = -1
+            if outer[1]:
+                ai_r = board[outer[1][0]][outer[1][1]]
+            else:
+                ai_r = -1
+
+            # return forced/urgent spots immediately
+            if ai_val == 16:
+                available = [p for p in mono if board[p[0]][p[1]] == 1]
+                if ai_mono[0] != 1 and ai_l == 1:
+                    available.append(outer[0])
+                if ai_mono[-1] != 1 and ai_r == 1:
+                    available.append(outer[1])
+                print("found own 4", available)
+                return available
         for mono in self.monomials:
             ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
             outer = self.get_outer(board, mono)
@@ -204,34 +253,48 @@ class Bot:
             op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
 
             # return forced/urgent spots immediately
-            if ai_val == 16 or op_val == 16:
+            if op_val == 16:
                 available = [p for p in mono if board[p[0]][p[1]] == 1]
                 if ai_mono[0] != 1 and ai_l == 1:
                     available.append(outer[0])
                 if ai_mono[-1] != 1 and ai_r == 1:
                     available.append(outer[1])
-                print("found 4", available)
+                print("found enemy 4", available)
                 return available
         for mono in self.monomials:
             ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
-            outer = self.get_outer(board, mono)
-            if outer[0]:
-                ai_l = board[outer[0][0]][outer[0][1]]
-            else:
-                ai_l = -1
-            if outer[1]:
-                ai_r = board[outer[1][0]][outer[1][1]]
-            else:
-                ai_r = -1
-            op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
-            if op_val == 8 and (op_mono[0] == 1 or op_l == 1) and (op_mono[-1] == 1 or op_r == 1):
-                available = self.find_open3_spots(mono, board)
-                print("found enemy 3", available)
-                return available
-            if ai_val == 8 and (ai_mono[0] == 1 or ai_l == 1) and (ai_mono[-1] == 1 or ai_r == 1):
-                available = self.find_open3_spots(mono, board)
-                print("found own 3", available)
-                return available
+            # outer = self.get_outer(board, mono)
+            # if outer[0]:
+            #     ai_l = board[outer[0][0]][outer[0][1]]
+            # else:
+            #     ai_l = -1
+            # if outer[1]:
+            #     ai_r = board[outer[1][0]][outer[1][1]]
+            # else:
+            #     ai_r = -1
+            # op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
+            if ai_val == 8:
+                available, split = self.find_open3_spots(mono, board)
+                if len(available) - split == 2:
+                    print("found own 3", available)
+                    return available
+        for mono in self.monomials:
+            ai_mono, op_mono, ai_val, op_val = self.monos_and_vals(board, mono)
+            # outer = self.get_outer(board, mono)
+            # if outer[0]:
+            #     ai_l = board[outer[0][0]][outer[0][1]]
+            # else:
+            #     ai_l = -1
+            # if outer[1]:
+            #     ai_r = board[outer[1][0]][outer[1][1]]
+            # else:
+            #     ai_r = -1
+            # op_l, op_r = 2 if ai_l == 0 else 0, 2 if ai_r == 0 else 0
+            if op_val == 8:
+                available, split = self.find_open3_spots(mono, board)
+                if len(available) - split == 2:
+                    print("found enemy 3", available)
+                    return available
             
         available = [[x, y] for x in range(19) for y in range(19)
                 if board[x][y] == 1 and not self.lonely_spot(board, [x, y], 2)]
