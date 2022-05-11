@@ -2,23 +2,28 @@
 #lang racket/gui
 (require racket/gui/base)
 (require racket/tcp)
+(require racket/system)
 
 ;;; Server Stuff
+(define (run-program command)
+  (thread (lambda () (system command))))
+
 ; Connect to first bot
 (display "Waiting for First Bot Connection\n")
 (define listener (tcp-listen 8085 2 #t "127.0.0.1"))
+(run-program "python3 minimax_client.py") ;Comment out this line to use your own ai client
 (define-values (in1 out1) (tcp-accept listener))
 (define name1 (read in1))
-(flush-output out1)
 (display (format "~a connected\n" name1))
 
 ; Connect to second bot
 (display "Waiting for Second Bot Connection\n")
+(run-program "python3 oscar_client.py") ;Comment out this line to use your own ai client
 (define-values (in2 out2) (tcp-accept listener))
 (define name2 (read in2))
-(flush-output out2)
 (display (format "~a connected" name2))
 
+; function to send command through tcp socket
 (define (send-command command coord destination)
   (define output (format "~a/~a, ~a" command (first coord) (second coord)))
   (write output destination)
@@ -374,3 +379,4 @@
 
 
 (send frame show #t)
+(provide (all-defined-out))
