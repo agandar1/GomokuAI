@@ -37,6 +37,7 @@
 (define winner #f)
 (define ai-turn #f)
 (define game-thread #f)
+(define-values (black-player white-player) (values #f #f))
 
 (define (board-get row col)
   (vector-ref (vector-ref board row) col))
@@ -70,6 +71,9 @@
     (define pieces (append (neighbors (car x) (cdr x) 1)
                            (neighbors (car x) (cdr x) -1)))
     (and (<= 4 (length pieces))
+         (send status-msg set-label (format "Winner: ~a, ~a"
+                                            (if (= player 2) "Black" "White")
+                                            (if (= player 2) black-player white-player)))
          (set! winner (list player (cons (list row col) pieces))))))
 
 (define (new-game game-type)
@@ -83,17 +87,27 @@
   
   (send-command "new_game" (list 0 0) out1)
   (send-command "new_game" (list 0 0) out2)
-  (when (= game-type 3)
-    (set! game-thread (thread (lambda () (ai-vs-ai 0 name1 name2)))))
-  (when (= game-type 4)
-    (set! game-thread (thread (lambda () (ai-vs-ai 0 name2 name1))))))
-
-(define (ai-vs-ai turn_cnt first_bot second_bot)
+  (cond ((= game-type 1)
+         (set! game-thread (thread (lambda () (human-vs-ai 0 #t name1)))))
+        ((= game-type 2)
+         (set! game-thread (thread (lambda () (human-vs-ai 0 #t name2)))))
+        ((= game-type 3)
+         (set! game-thread (thread (lambda () (human-vs-ai 0 #f name1)))))
+        ((= game-type 4)
+         (set! game-thread (thread (lambda () (human-vs-ai 0 #f name2)))))
+        ((= game-type 5)
+         (set! game-thread (thread (lambda () (ai-vs-ai 0 name1 name2)))))
+        ((= game-type 6)
+         (set! game-thread (thread (lambda () (ai-vs-ai 0 name2 name1)))))))
+  
+(define (ai-vs-ai turn-cnt first_bot second_bot)
   ; recursive turn function, runs until a valid turn is made
   (set! ai-turn #t)
+  (set! black-player first_bot)
+  (set! white-player second_bot)
   (define (turn bot_in bot_out)
-    (define command (if (= turn_cnt 0) "start" "turn"))
-    (define point (if (= turn_cnt 0) (list 0 0) (list (car last-added) (cdr last-added))))
+    (define command (if (= turn-cnt 0) "start" "turn"))
+    (define point (if (= turn-cnt 0) (list 0 0) (list (car last-added) (cdr last-added))))
     (send-command command point bot_out)
     (define choice (read bot_in))
     (when (not (add-piece (first choice) (second choice)))
@@ -101,19 +115,57 @@
   
   ; define which bot is black and which is white
   (define-values (b_in b_out w_in w_out)
-    (if (equal? first_bot name1)
-        (values in1 out1 in2 out2)
-        (values in2 out2 in1 out1)))
+    (if (equal? first_bot name1) (values in1 out1 in2 out2) (values in2 out2 in1 out1)))
   
   ; apply a turn
   (when (not winner)
-    (if (even? turn_cnt)
-        (turn b_in b_out)
-        (turn w_in w_out))
+    (if (even? turn-cnt)
+        (and (send status-msg set-label (format "Turn: Black, ~a" first_bot))
+             (turn b_in b_out))
+        (and (send status-msg set-label (format "Turn: White, ~a" second_bot))
+             (turn w_in w_out)))
     (sleep 1)
     (send canvas manual-update-pieces)
-    (ai-vs-ai (add1 turn_cnt) first_bot second_bot))
+    (ai-vs-ai (add1 turn-cnt) first_bot second_bot))
   (set! ai-turn #t))
+
+(define (human-vs-ai turn-cnt human-first bot-name)
+  ; recursive turn function, runs until a valid turn is made
+  (set! black-player (if human-first "Human" bot-name))
+  (set! white-player (if human-first bot-name "Human"))
+  (set! ai-turn (or (and human-first (odd? turn-cnt))
+                    (and (not human-first) (even? turn-cnt))))
+
+  ; define which bot we're playing with
+  (define-values (bot_in bot_out)
+    (if (equal? bot-name name1) (values in1 out1) (values in2 out2)))
+
+  ; single turn for ai
+  (define (bot-turn)
+    (define command (if (= turn-cnt 0) "start" "turn"))
+    (define point (if (= turn-cnt 0) (list 0 0) (list (car last-added) (cdr last-added))))
+    (send-command command point bot_out)
+    (define choice (read bot_in))
+    (when (not (add-piece (first choice) (second choice)))
+      (bot-turn)))
+
+  ; single turn for human
+  (define (human-turn last-move)
+    (when (equal? last-move last-added)
+      (human-turn last-move)))
+  
+  ; apply a turn
+  (when (not winner)
+    (when (even? turn-cnt)
+      (send status-msg set-label (format "Turn: Black, ~a" (if human-first "Human" bot-name)))
+      (if human-first (human-turn last-added) (bot-turn)))
+    (when (odd? turn-cnt)
+      (send status-msg set-label (format "Turn: White, ~a" (if human-first bot-name "Human")))
+      (if human-first (bot-turn) (human-turn last-added)))
+    (when ai-turn (sleep 1))
+    (send canvas manual-update-pieces)
+    (human-vs-ai (add1 turn-cnt) human-first bot-name))
+  (set! ai-turn #f))
 
 
 ;;; Gui
@@ -238,34 +290,34 @@
           (draw-pieces dc)
           (when winner (draw-win-line dc))))))
 
-(define status_msg
+(define status-msg
   (new message%
        (parent frame)
-       (label "Status Message...")))
+       (label "Waiting To Start")))
 
 (define menu-bar
   (new menu-bar%
     (parent frame)))
-(define game-menu
+(define play-first-menu
   (new menu%
-    (label "&Game")
-    (parent menu-bar)))
-(define new-game-menu
+       (label "&Play &First")
+       (parent menu-bar)))
+(define play-second-menu
   (new menu%
-       (label "&New Game")
-       (parent game-menu)))
+       (label "Play &Second")
+       (parent menu-bar)))
 (define ai-vs-ai-menu
   (new menu%
        (label "&Ai vs Ai")
-       (parent new-game-menu)))
-(define settings-menu
+       (parent menu-bar)))
+(define exit-menu
   (new menu%
-    (label "&Settings")
-    (parent menu-bar)))
+       (label "&Exit")
+       (parent menu-bar)))
 
 (new menu-item%
   (label "&Exit")
-  (parent game-menu)
+  (parent exit-menu)
   (callback (λ (m event)
               (unless (equal? game-thread #f)
                 (kill-thread game-thread))
@@ -277,35 +329,47 @@
               (close-output-port out2)
               (tcp-close listener)
               (exit '()))))
-
 (new menu-item%
-     (label "Play &First")
-     (parent new-game-menu)
+     (label (format "vs &~a" name1))
+     (parent play-first-menu)
      (callback (lambda (m event)
                  (set! winner (list #t empty))
                  (new-game 1)
                  (send canvas refresh))))
 (new menu-item%
-     (label "Play &Second")
-     (parent new-game-menu)
+     (label (format "vs &~a" name2))
+     (parent play-first-menu)
      (callback (lambda (m event)
                  (set! winner (list #t empty))
                  (new-game 2)
+                 (send canvas refresh))))
+(new menu-item%
+     (label (format "vs &~a" name1))
+     (parent play-second-menu)
+     (callback (lambda (m event)
+                 (set! winner (list #t empty))
+                 (new-game 3)
+                 (send canvas refresh))))
+(new menu-item%
+     (label (format "vs &~a" name2))
+     (parent play-second-menu)
+     (callback (lambda (m event)
+                 (set! winner (list #t empty))
+                 (new-game 4)
                  (send canvas refresh))))
 (new menu-item%
      (label (format "&B: ~a, W: ~a" name1 name2))
      (parent ai-vs-ai-menu)
      (callback (lambda (m event)
                  (set! winner (list #t empty))
-                 (new-game 3)
+                 (new-game 5)
                  (send canvas refresh))))
-
 (new menu-item%
      (label (format "&B: ~a, W: ~a" name2 name1))
      (parent ai-vs-ai-menu)
      (callback (lambda (m event)
                  (set! winner (list #t empty))
-                 (new-game 4)
+                 (new-game 6)
                  (send canvas refresh))))
 
 
