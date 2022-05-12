@@ -4,10 +4,12 @@ This project uses Minimax Algorithm and Monomials to play gomoku.
 As part of the project, we created a gomoku GUI in racket to play the ai's against each other.
 
 **To Just Play**
-You should have Python3 and Numpy installed for the included AIs to work
+You should have the following installed for the included AIs to work:
+1. Python 3
+2. Numpy
+3. Racket from https://download.racket-lang.org/
 We included windows and linux executables that start the default ai's automatically, (files "gomoku-windows.exe"" and "gomoku-linux") just run it and it should be good to go.
-You shouldn't need to install racket to run these executables, they should just run.
-You can also run the file "gomoku_old_engine.py" with python3 to see our first gui
+You can also run the file "gomoku_old_engine.py" with python3 to see our initial gui
 
 **To Connect Custom AI**
 The GUI also supports connecting other ai's written in any language, as long as they follow the compatibility criteria.
