@@ -11,14 +11,14 @@
 ; Connect to first bot
 (display "Waiting for First Bot Connection\n")
 (define listener (tcp-listen 8085 2 #t "127.0.0.1"))
-(run-program "python3 minimax_client.py") ;Comment out this line to use your own ai client
+;(run-program "python3 minimax_client.py") ;Comment out this line to use your own ai client
 (define-values (in1 out1) (tcp-accept listener))
 (define name1 (read in1))
 (display (format "~a connected\n" name1))
 
 ; Connect to second bot
 (display "Waiting for Second Bot Connection\n")
-(run-program "python3 oscar_client.py") ;Comment out this line to use your own ai client
+;(run-program "python3 oscar_client.py") ;Comment out this line to use your own ai client
 (define-values (in2 out2) (tcp-accept listener))
 (define name2 (read in2))
 (display (format "~a connected" name2))
