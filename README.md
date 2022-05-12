@@ -7,7 +7,7 @@ As part of the project, we created a gomoku GUI in racket to play the ai's again
 You should have the following installed for the included AIs to work:
 1. Python 3
 2. Numpy
-3. Racket
+3. Racket from https://download.racket-lang.org/
 We included windows and linux executables that start the default ai's automatically, (files "gomoku-windows.exe"" and "gomoku-linux") just run it and it should be good to go.
 You can also run the file "gomoku_old_engine.py" with python3 to see our initial gui
 
