@@ -174,7 +174,7 @@
 
 
 ;;; Gui
-(define bg-image (make-object bitmap% "kaya_4k.jpg"))
+(define bg-image (make-object bitmap% "img/kaya_4k.jpg"))
 (define font (send the-font-list find-or-create-font 20 'default 'normal 'bold))
 (define no-brush (make-object brush% "black" 'transparent))
 (define red-pen (make-object pen% "red" 5 'solid))

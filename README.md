@@ -8,23 +8,20 @@ You should have the following installed for the included AIs to work:
 1. Python 3
 2. Numpy
 3. Racket from https://download.racket-lang.org/
-We included windows and linux executables that start the default ai's automatically, (files "gomoku-windows.exe"" and "gomoku-linux") just run it and it should be good to go.
+Run the gomoku.rkt racket file first, then the bot client python files with the following commands:
+1. racket gomoku.rkt
+2. python3 minimax\_client.py
+2. python3 oscar\_client.py
+You might need to use separate terminals for this.
 You can also run the file "gomoku_old_engine.py" with python3 to see our initial gui
 
 **To Connect Custom AI**
 The GUI also supports connecting other ai's written in any language, as long as they follow the compatibility criteria.
 
-To use your own ai with our engine: 
-1. install racket to your computer
-3. run the file "gomoku.rkt" manually in one command prompt
-4. start running the first ai client in a second command prompt
-5. start running the second ai client in a third command prompt
-6. enjoy.
+To use your own ai with our engine, follow the same steps as above, but start your own bot client instead of the included ones. 
 
 **Included AIs**
 We have included two ai's: our minimax ai ("minimax\_client.py"), and a previous year's gomoku project ("oscar\_client.py")
-They are used as the default options if you just run the executable
-You can also connect them manually using the custom ai instructions above
 
 **AI Client Compatibility**
 You may use any ai you make as long as it meets these criteria:
